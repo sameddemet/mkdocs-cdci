@@ -1,0 +1,66 @@
+---
+
+name: parlons la vache
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout our code
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          vache.js
+    
+    - name: setup node env
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: install dependancies
+      run: |
+        npm install cowsay
+    - name: execute build step
+      run: |
+        node vache.js
+    - name: upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: letextedemavache
+        path: vache_dessinee.html
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: dowload artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: letextedemavache
+
+    - name: debug ls
+      run: ls -alh
+
+    - name: rename vache text
+      run: |
+        mkdir _site
+        mv vache_dessinee.html _site/index.html
+
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
